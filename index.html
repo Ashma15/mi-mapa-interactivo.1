@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapa Interactivo en Bogotá con Marcadores</title>
+
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <!-- Leaflet Control Geocoder CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,26 +17,32 @@
       padding: 0;
       background-color: #f4f4f4;
     }
+
     #map {
       height: 80vh;
       width: 100%;
     }
+
     .container {
       padding: 20px;
     }
+
     .header {
       text-align: center;
       margin-bottom: 20px;
     }
+
     .footer {
       text-align: center;
       margin-top: 20px;
       font-size: 0.9rem;
     }
+
     .controls {
       margin-top: 20px;
       text-align: center;
     }
+
     button {
       padding: 10px 15px;
       font-size: 16px;
@@ -45,25 +53,43 @@
       border: none;
       border-radius: 5px;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
+    /* Márgenes con corazones */
+    .heart-border {
+      border: 5px solid #ff3366;
+      padding: 20px;
+      border-radius: 15px;
+      margin: 20px;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Heart_icon_%28colored%29.svg/32px-Heart_icon_%28colored%29.svg.png') no-repeat center center;
+      background-size: 30px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
-<body>
 
+<body>
   <div class="container">
     <div class="header">
       <h1>Mapa Interactivo de Bogotá</h1>
       <p>Haz clic en el mapa para agregar un marcador y personalizarlo.</p>
     </div>
-    <div id="map"></div>
+    
+    <!-- Contenedor con márgenes con corazones -->
+    <div class="heart-border">
+      <div id="map"></div>
+    </div>
+    
     <div class="controls">
       <button onclick="showColorPicker()">Seleccionar Color de Marcador</button>
       <button onclick="clearMarkers()">Eliminar Todos los Marcadores</button>
     </div>
+    
     <div class="footer">
-      <p>Mapa interactivo desarrollado por ti. ¡Disfrútalo!</p>
+      <p>Mapa interactivo desarrollado para ti. ¡Disfrútalo!</p>
     </div>
   </div>
 
@@ -120,7 +146,9 @@
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
-            shadowSize: [0, 0]
+            shadowSize: [0, 0],
+            // Cambiar color del marcador según la selección
+            iconUrl: `https://www.iconsdb.com/icons/colored/${selectedColor}/heart.png`
           })
         }).addTo(map);
         
@@ -130,16 +158,16 @@
           <button onclick='deleteMarker(${lat}, ${lng})'>Eliminar Marcador</button>
         `);
         
-        saveMarker(lat, lng, noteTitle, noteContent);
+        saveMarker(lat, lng, noteTitle, noteContent, selectedColor);
       } else {
         alert("Por favor ingresa un título y contenido.");
       }
     });
 
     // Guardar el marcador en el localStorage
-    function saveMarker(lat, lng, title, content) {
+    function saveMarker(lat, lng, title, content, color) {
       var markers = JSON.parse(localStorage.getItem('markers')) || [];
-      markers.push({ lat, lng, title, content });
+      markers.push({ lat, lng, title, content, color });
       localStorage.setItem('markers', JSON.stringify(markers));
     }
 
@@ -172,7 +200,7 @@
       savedMarkers.forEach(function(markerData) {
         var marker = L.marker([markerData.lat, markerData.lng], {
           icon: L.icon({
-            iconUrl: `https://upload.wikimedia.org/wikipedia/commons/1/1d/Heart_icon_%28colored%29.svg`,
+            iconUrl: `https://www.iconsdb.com/icons/colored/${markerData.color}/heart.png`, // Marcador con color personalizado
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
