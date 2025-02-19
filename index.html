@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Interactivo en Bogotá con Marcadores</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Leaflet Control Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    #map {
+      height: 80vh;
+      width: 100%;
+    }
+    .container {
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Mapa Interactivo de Bogotá</h1>
+      <p>Haz clic en el mapa para agregar un marcador y personalizarlo.</p>
+    </div>
+    <div id="map"></div>
+    <div class="controls">
+      <button onclick="showColorPicker()">Seleccionar Color de Marcador</button>
+      <button onclick="clearMarkers()">Eliminar Todos los Marcadores</button>
+    </div>
+    <div class="footer">
+      <p>Mapa interactivo desarrollado por ti. ¡Disfrútalo!</p>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Leaflet Control Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    var selectedColor = 'red'; // Color por defecto de los marcadores
+    var map = L.map('map').setView([4.7110, -74.0721], 12); // Bogotá, Colombia
+
+    // Cargar capa de mapa
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Limitar la vista del mapa a Bogotá
+    var bounds = [[4.478, -74.340], [4.866, -73.906]]; // Área de Bogotá
+    map.setMaxBounds(bounds);
+
+    // Agregar control de búsqueda solo para Bogotá
+    var geocoder = L.Control.geocoder({
+      geocoder: L.Control.Geocoder.nominatim(),
+      placeholder: 'Buscar en Bogotá...',
+      queryParams: {
+        countrycodes: 'CO',
+        limit: 5
+      },
+      onResult: function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        if (map.getBounds().contains([lat, lng])) {
+          map.setView([lat, lng], 14);
+        } else {
+          alert("La ubicación no está dentro de los límites de Bogotá.");
+        }
+      }
+    }).addTo(map);
+
+    // Función para agregar un marcador
+    map.on('click', function(e) {
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+
+      // Preguntar por el título y contenido de la nota
+      var noteTitle = prompt("Título de la nota:");
+      var noteContent = prompt("Contenido de la nota:");
+
+      if (noteTitle && noteContent) {
+        var marker = L.marker([lat, lng], {
+          icon: L.icon({
+            iconUrl: `https://upload.wikimedia.org/wikipedia/commons/1/1d/Heart_icon_%28colored%29.svg`, // Marcador de corazón
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+            shadowSize: [0, 0]
+          })
+        }).addTo(map);
+        
+        marker.bindPopup(`
+          <b>${noteTitle}</b><br>
+          ${noteContent}<br>
+          <button onclick='deleteMarker(${lat}, ${lng})'>Eliminar Marcador</button>
+        `);
+        
+        saveMarker(lat, lng, noteTitle, noteContent);
+      } else {
+        alert("Por favor ingresa un título y contenido.");
+      }
+    });
+
+    // Guardar el marcador en el localStorage
+    function saveMarker(lat, lng, title, content) {
+      var markers = JSON.parse(localStorage.getItem('markers')) || [];
+      markers.push({ lat, lng, title, content });
+      localStorage.setItem('markers', JSON.stringify(markers));
+    }
+
+    // Eliminar un marcador
+    function deleteMarker(lat, lng) {
+      var markers = JSON.parse(localStorage.getItem('markers')) || [];
+      markers = markers.filter(marker => marker.lat !== lat || marker.lng !== lng);
+      localStorage.setItem('markers', JSON.stringify(markers));
+      location.reload();
+    }
+
+    // Mostrar el selector de color para el marcador
+    function showColorPicker() {
+      const color = prompt("Selecciona un color para el marcador (red, blue, green, yellow):");
+      if (color) {
+        selectedColor = color;
+        alert(`Color de marcador cambiado a ${selectedColor}`);
+      }
+    }
+
+    // Eliminar todos los marcadores
+    function clearMarkers() {
+      localStorage.removeItem('markers');
+      location.reload();
+    }
+
+    // Cargar los marcadores guardados
+    window.onload = function() {
+      var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
+      savedMarkers.forEach(function(markerData) {
+        var marker = L.marker([markerData.lat, markerData.lng], {
+          icon: L.icon({
+            iconUrl: `https://upload.wikimedia.org/wikipedia/commons/1/1d/Heart_icon_%28colored%29.svg`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+            shadowSize: [0, 0]
+          })
+        }).addTo(map);
+        marker.bindPopup(`
+          <b>${markerData.title}</b><br>
+          ${markerData.content}<br>
+          <button onclick='deleteMarker(${markerData.lat}, ${markerData.lng})'>Eliminar Marcador</button>
+        `);
+      });
+    };
+  </script>
+
+</body>
+</html>
